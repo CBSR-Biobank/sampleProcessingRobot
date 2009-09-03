@@ -9,4 +9,7 @@ Require-Bundle: org.eclipse.ui,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ClassPath: .,
- libs/RXTXcomm.jar
+ libs/RXTXcomm.jar,
+ libs/
+Bundle-NativeCode: libs/rxtxSerial.dll;selection-filter="(&(osgi.arch=x86)(osg
+ i.os=win32))",*

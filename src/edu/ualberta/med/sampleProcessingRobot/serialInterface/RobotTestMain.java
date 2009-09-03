@@ -34,7 +34,7 @@ public class RobotTestMain {
 			System.exit(1);
 		}
 		// Read barcode
-		/*try{
+		try{
 			barcode = robot.scanSourceTubeBarcode();
 		} catch(RobotException cbsre) {
 			System.out.println(cbsre);
@@ -45,7 +45,9 @@ public class RobotTestMain {
 			System.out.println("Couldn't read source tube barcode");
 			done(robot);
 			System.exit(1);
-		}*/
+		}
+		else
+			System.out.println("Tube barcode is: " + barcode);
 		// Get fluid level
 		try{
 			volume = robot.scanSourceTubeLevel();
@@ -54,6 +56,7 @@ public class RobotTestMain {
 			done(robot);
 			System.exit(1);
 		}
+		System.out.println("Tube fluid level is: " + volume + "uL");
 		// Grip source tube
 		try{
 			robot.gripSourceTube();
@@ -71,8 +74,27 @@ public class RobotTestMain {
 			System.exit(1);
 		}
 		int sampleID = 1;
+		// Get some liquid
+		try{
+			volume = robot.aspirateSample(800);
+		} catch(RobotException cbsre) {
+			System.out.println(cbsre);
+			done(robot);
+			System.exit(1);
+		}
+		
+		try{
+			robot.dispenseFTA();
+			robot.dispenseFTA();
+		} catch(RobotException cbsre) {
+			System.out.println(cbsre);
+			done(robot);
+			System.exit(1);
+		}
+		
+
 		// Whittle down most of the liquid
-		while(volume > 2.0) {
+		while(volume > 3000) {
 			// Get some liquid
 			try{
 				volume = robot.aspirateSample(800);

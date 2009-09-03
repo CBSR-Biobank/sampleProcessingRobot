@@ -19,7 +19,6 @@ package edu.ualberta.med.sampleProcessingRobot.serialInterface;
 import gnu.io.SerialPort;
 
 import java.text.DecimalFormat;
-import java.util.EnumMap;
 
 import edu.ualberta.med.sampleProcessingRobot.serialInterface.SerialInterface;
 
@@ -32,6 +31,8 @@ public class RobotInterface {
 	/**
 	 * The optical fluid level sensor has three settings, this defines
 	 * which one to use
+	 * 
+	 * UNIMPLEMENTED!!!
 	 */
 	public enum FluidLevelType {FLUID_TYPE_BLOOD, 
 		FLUID_TYPE_PLASMA, 
@@ -39,6 +40,8 @@ public class RobotInterface {
 	
 	/**
 	 * The size of the source tube to be used on this run.
+	 * 
+	 * UNIMPLEMENTED!!!
 	 */
 	public enum SourceTubeSize {TEN_MIL, SIX_MIL, THREE_MIL};
 		
@@ -52,7 +55,7 @@ public class RobotInterface {
 	/**
 	 * The maximum volume of fluid the pipetter can hold at one time.
 	 */
-	public static final int MAX_ASPIRATE_VOLUME = 1000;
+	public static final int MAX_ASPIRATE_VOLUME = 900;
 
 	/**
 	 * The number of pallets available to dispense to
@@ -81,6 +84,7 @@ public class RobotInterface {
 	 * diameters of source tube.
 	 */
 	private static final double UL_PER_MM_WIDE = 133.33333;
+	// UNIMPLEMENTED!!!
 	private static final double UL_PER_MM_NARROW = 0;
 	
 	/**
@@ -88,9 +92,17 @@ public class RobotInterface {
 	 */
 	public static final byte CR = 13;
 	
+	/**
+	 * Internal state for tube size and level sense type
+	 * 
+	 * UNIMPLEMENTED!!!
+	 */
 	private SourceTubeSize tubeSize;
 	private FluidLevelType levelType;
 	
+	/**
+	 * Serial port interface to the robot.
+	 */
 	private SerialInterface xselPort;
 	
 	/**
@@ -99,8 +111,31 @@ public class RobotInterface {
 	 */
 	private static final String COMM_PORT = "COM5";
 	
+	/**
+	 * COM port name to try and connect to the source tube barcode reader on.
+	 */
+	private static final String SOURCE_TUBE_BARCODE_PORT = "COM3";
+	
+	/**
+	 * COM port name to try and connect to the FTA card barcode reader on.
+	 * 
+	 * UNIMPLEMENTED!!!
+	 */
+	private static final String FTA_BARCODE_PORT = "COM4";
+	
+	/**
+	 * Latest barcode read
+	 */
+	private String barcode;
+	
+	/**
+	 * Formatting for sending commands to the robot
+	 */
 	private DecimalFormat oneDigit, twoDigit, fourDigit;
 	
+	/**
+	 * Initialize formats
+	 */
 	public RobotInterface() {
 		oneDigit = new DecimalFormat("0");
 		twoDigit = new DecimalFormat("00");
@@ -113,8 +148,34 @@ public class RobotInterface {
 	 * @throws RobotException
 	 */
 	public void homeArm() throws RobotException {
-		throw new RobotException("Function not Implemented");
+		xselPort.writeString("HOM");
+		String response = xselPort.readString();
+		if(!response.contains("HOME"))
+			throw new RobotComException("Unexpected response from robot");
 	}
+	
+	/**
+	 * Pauses the robot if it is running
+	 * @throws RobotException
+	 */
+	public void pause() throws RobotException {
+		xselPort.writeString("PAU");
+		String response = xselPort.readString();
+		if(!response.contains("Paused"))
+			throw new RobotComException("Unexpected response from robot");
+	}
+	
+	/**
+	 * Resumes running if the robot was paused
+	 * @throws RobotException
+	 */
+	public void resume() throws RobotException {
+		xselPort.writeString("RES");
+		String response = xselPort.readString();
+		if(!response.contains("Resumed"))
+			throw new RobotComException("Unexpected response from robot");
+	}
+	
 	
 	/**
 	 * Sets up a new run with given source tube and sample parameters
@@ -130,13 +191,6 @@ public class RobotInterface {
 	throws RobotException {
 		if(!connectToXSEL())
 			throw new RobotInitException("Unable to connect to the robot");
-		/*CBSRobotState state = getRobotState();
-		if(state.isGrippingSourceTube() ||
-				state.isHavePipetteTip() ||
-				state.isHoldingCap() ||
-				state.isHoldingSourceTube())
-			throw new CBSRobotInitException("Cannot initialize because the" + 
-					"robot thinks it is holding something.");*/
 		if(size == null)
 			throw new NullPointerException("The source tube size is null!");
 		if(fluid == null)
@@ -153,8 +207,8 @@ public class RobotInterface {
 	 * the pipetter does not have a tip attached.  Calling this method in any
 	 * other state can and will result in damage.
 	 */
-	public void hardReset() {
-		return;
+	public void hardReset() throws RobotException{
+		xselPort.writeString("RST");
 	}
 	
 	/**
@@ -185,6 +239,7 @@ public class RobotInterface {
 	 * @throws RobotException
 	 */
 	public void returnSourceTube() throws RobotException {
+		runCommand("RUN CapST");
 		runCommand("RUN RetST");
 	}
 	
@@ -217,15 +272,7 @@ public class RobotInterface {
 					"volume of liquid to aspirate");
 		int steps = (int)(volume * STEPS_PER_UL);
 		runCommand("RUN AspST " + fourDigit.format(steps));
-		String response = xselPort.readString(CR);
-		if(!response.startsWith("LVL"))
-			throw new RobotComException(
-					"Robot did not correctly report source tube fluid volume");
-		int level = Integer.parseInt(response.substring(4));
-		if(tubeSize == SourceTubeSize.TEN_MIL)
-			return (int)(level * UL_PER_MM_WIDE);
-		else
-			return (int)(level * UL_PER_MM_NARROW);
+		return getFluidLevel();
 	}
 	
 	/**
@@ -238,7 +285,7 @@ public class RobotInterface {
 			throw new IllegalArgumentException(volume + " is an invalid" + 
 					"volume of liquid to aspirate");
 		int steps = (int)(volume * STEPS_PER_UL);
-		runCommand("RUN AspPT " + fourDigit.format(steps));
+		throw new RobotException("Function not implemented");
 	}
 	
 	/**
@@ -251,7 +298,7 @@ public class RobotInterface {
 			throw new IllegalArgumentException(volume + " is an invalid" + 
 					"volume of liquid to aspirate");
 		int steps = (int)(volume * STEPS_PER_UL);
-		runCommand("RUN AspPB " + fourDigit.format(steps));
+		throw new RobotException("Function not implemented");
 	}
 	
 	/**
@@ -264,7 +311,7 @@ public class RobotInterface {
 			throw new IllegalArgumentException(volume + " is an invalid" + 
 					"volume of liquid to dispense");
 		int steps = (int)Math.floor(volume * STEPS_PER_UL);
-		runCommand("RUN DspST " + fourDigit.format(steps));
+		throw new RobotException("Function not implemented");
 	}
 	
 	/**
@@ -289,7 +336,7 @@ public class RobotInterface {
 			throw new IllegalArgumentException(volume + 
 					" is an invalid volume of liquid to dispense");
 		int steps = (int)Math.floor(volume * STEPS_PER_UL);
-		runCommand("RUN DspCT " + oneDigit.format(palletNum) + " " +
+		runCommand("RUN DisCT " + oneDigit.format(palletNum) + " " +
 				twoDigit.format(tubeIndex) + " " + fourDigit.format(steps));
 	}
 	
@@ -299,7 +346,8 @@ public class RobotInterface {
 	 * @throws RobotException
 	 */
 	public String dispenseFTA() throws RobotException {
-		throw new RobotException("Function not Implemented");
+		runCommand("RUN DisFT");
+		return "";
 	}
 	
 	/**
@@ -310,16 +358,43 @@ public class RobotInterface {
 	 * @throws RobotException
 	 */
 	public String scanSourceTubeBarcode() throws RobotException {
-		throw new RobotException("Function not Implemented");
+		runCommand("RUN RdBcd");
+		return barcode;
+	}
+	
+	/**
+	 * Connects to a barcode reader and asks to scan a barcode.  If the reader
+	 * times out it will send NOREAD, otherwise it will send the barcode.
+	 * Also sends BCD to the XSEL controller to let it know we read the barcode
+	 * successfully.
+	 * 
+	 * @param comPort Port to connect to the barcode reader on
+	 * @return Empty string if nothing is found, otherwise the read barcode
+	 * @throws RobotException
+	 */
+	private String readBarcode(String comPort) throws RobotException{
+		String tubeCode;
+		BarcodeInterface barcodeReader = new BarcodeInterface(comPort);
+		if(!barcodeReader.port.isOpen())
+			throw new RobotComException(
+					"Error connecting to source tube barcode reader.");
+		tubeCode = barcodeReader.readCode();
+		if(tubeCode.contains("NOREAD"))
+			return "";
+		else {
+			xselPort.writeString("BCD");
+			return tubeCode;
+		}
 	}
 	
 	/**
 	 * Scan the fluid level for the source tube the Robot is currently holding
-	 * @return fluid level in mL, this is approximate
+	 * @return fluid level in uL, this is approximate
 	 * @throws RobotException
 	 */
-	public double scanSourceTubeLevel() throws RobotException {
-		throw new RobotException("Function not Implemented");
+	public int scanSourceTubeLevel() throws RobotException {
+		runCommand("RUN STLvl");
+		return getFluidLevel();
 	}
 	
 	/**
@@ -332,47 +407,68 @@ public class RobotInterface {
 	}
 	
 	/**
-	 * This will clean up anything left, including disposing of a pipette
-	 * tip, capping the source tube, and returning it to the rack.  It will
-	 * leave the robot in the default position.
+	 * This disconnects from the robot, and resets the robot's internal 
+	 * position.
+	 * 
 	 * @throws RobotException
 	 */
 	public void allDone() throws RobotException {
-		//throw new CBSRobotException("Function not Implemented");
 		disconnectFromXSEL();
 	}
 	
 	/**
-	 * This listens for up to 1.5 seconds for the controller to send the 
-	 * "READY" signal, 
+	 * Requests the robot's current estimate of the fluid level in the
+	 * source tube
+	 * 
+	 * @return Fluid level in uL
+	 * @throws RobotException
+	 */
+	private int getFluidLevel() throws RobotException {
+		xselPort.flush();
+		xselPort.writeString("LVL");
+		String response = xselPort.readString();
+		if(response.contains("Level")) {
+			int retVal = 
+				(int)(Float.parseFloat(response.substring(6).trim()) *
+						UL_PER_MM_WIDE);
+			return retVal;
+		}
+		throw new RobotComException("Unexpected resonse from robot");
+	}
+	
+	/**
+	 * Sends a command to the robot and waits for a response.
 	 * @param command
 	 * @throws RobotException
 	 */
 	private void runCommand(String command) throws RobotException {
-		final int LOOPS = 10;
-		for(int i = 0; i < LOOPS; i++) {
-			if(xselPort.readString(CR).equals("READY")) {
-				xselPort.writeString(command);
-				break;
-			}
-			if(i == LOOPS - 1) {
-				throw new RobotComException(
-						"Robot isn't ready for a new command");
-			}
-			try{Thread.sleep(150);}catch(Exception e){};
-		}
+		xselPort.flush();
+		xselPort.writeString(command);
 		String response = xselPort.readString();
-		if(!response.startsWith("RET")) {
-			throw new RobotComException("Unexpected response from robot");
+		if(response.contains("BARCODE")) {
+			barcode = readBarcode(SOURCE_TUBE_BARCODE_PORT);
+			response = xselPort.readString();
 		}
-		int retVal = Integer.parseInt(response.substring(4));
-		if(retVal != 1)
-			throw new RobotException(retVal);
-		return;
+		if(response.contains("FTACODE")) {
+			barcode = readBarcode(FTA_BARCODE_PORT);
+			response = xselPort.readString();
+		}
+		if(response.startsWith("RET")) {
+			int retVal = Integer.parseInt(response.substring(4).trim());
+			if(retVal != 1)
+				throw new RobotException(retVal);
+			return;
+		}
+		
+		throw new RobotComException("Unexpected response from robot");
 	}
 	
+	/**
+	 * Connects to the XSEL controller and makes sure we have communication.
+	 * @return true if connection was successful
+	 */
 	private boolean connectToXSEL() {
-		if(xselPort.isOpen())
+		if(xselPort != null && xselPort.isOpen())
 			return true;
 		xselPort = new SerialInterface(COMM_PORT,
 				9600, 
@@ -382,35 +478,45 @@ public class RobotInterface {
 		if(!xselPort.isOpen()) {
 			return false;
 		}
-		if(xselPort.readString(CR).equals("SYNCH")) {
-			xselPort.writeString("START\r");
-			if(xselPort.readString(CR).equals("READY"));
+		for(int i = 0; i < 10; i++) {
+			xselPort.writeString("START");
+			try{Thread.sleep(100);}catch(Exception e){};
+			String response = xselPort.readString();
+			if(response.contains("HOME"))
 				return true;
+			if(response.contains("BAD CMD")) {
+				if(resetXSELProgram() == false)
+					return false;
+			}
+			try{Thread.sleep(150);}catch(Exception e){};
 		}
 		xselPort.close();
 		return false;
 	}
 	
+	/**
+	 * Send reset to the X-SEL control program
+	 * 
+	 * @TODO: Probably always returns false due to incorrect response from
+	 * controller
+	 * @return true if the reset was successful
+	 */
+	private boolean resetXSELProgram() {
+		xselPort.writeString("RST");
+		String response = xselPort.readString();
+		if(!response.equals("Ready"))
+			return false;
+		return true;
+	}
+	
+	/**
+	 * Sends a reset and then disconnects from the X-SEL controller
+	 */
 	private void disconnectFromXSEL() {
-		if(xselPort.isOpen()) {
-			for(int i = 0; i < 10; i++) {
-				if(xselPort.readString(CR).equals("READY")) {
-					xselPort.writeString("RST");
-					break;
-				}
-				try{Thread.sleep(150);}catch(Exception e){};
-			}
+		if(xselPort != null && xselPort.isOpen()) {
+			xselPort.writeString("RST");
+			try{Thread.sleep(150);}catch(Exception e){};
 			xselPort.close();
 		}
 	}
-	
-	private boolean connectToSourceTubeScanner() {
-		return false;
-	}
-	
-	private boolean connectToFTAScanner() {
-		return false;
-	}
-	
-	
 }
