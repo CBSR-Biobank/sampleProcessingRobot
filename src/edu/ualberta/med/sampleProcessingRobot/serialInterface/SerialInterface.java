@@ -107,7 +107,7 @@ public class SerialInterface {
 				in = port.getInputStream();
 				//(new Thread(new SerialReader(in))).start();
 				out = port.getOutputStream();
-				System.out.println("Opened port " + portName);
+				print("Opened port " + portName);
 				return true;
 			}
 			else {
@@ -217,10 +217,10 @@ public class SerialInterface {
 	public String readString() {
 		final int BUF_SIZE = 100;
 		byte[] byteDest = new byte[BUF_SIZE];
-		String ret = null;
+		String ret = "";
 		int num = BUF_SIZE;
 		try {
-			while(num == BUF_SIZE) {
+			while(!ret.contains("\r")) {
 				if((num = in.read(byteDest)) > 0) {
 					ret += new String(byteDest, 0, num);
 				}
@@ -228,7 +228,21 @@ public class SerialInterface {
 		} catch (IOException e) {
 			print("Error reading String from " + portName);
 		}
+		print("Read :" + ret +":");
 		return ret;
+	}
+	
+	public void flush() {
+		final int BUF_SIZE = 100;
+		byte[] byteDest = new byte[BUF_SIZE];
+		int num = BUF_SIZE;
+		try {
+			while(num == BUF_SIZE) {
+				num = in.read(byteDest);
+			}
+		} catch (IOException e) {
+			print("Error reading String from " + portName);
+		}
 	}
 	
 	/**
@@ -272,14 +286,14 @@ public class SerialInterface {
 	public int writeString(String src) {
 		// Convert the argument strings to ASCII
 		byte[] srcAsBytes;
+		src += "\r";
 		try {
 			srcAsBytes = src.getBytes("US-ASCII");
 		} catch (UnsupportedEncodingException e) {
-			print("US-ASCII is an unsupported character encoding.");
-			print("Unless you are running this on a very strange computer");
-			print("You should never get this error.");
+			// Very very unlikely in the near-scope of the project.
 			return -1;
 		}
+		print("Wrote :" + src + ":");
 		return write(srcAsBytes);
 	}
 	

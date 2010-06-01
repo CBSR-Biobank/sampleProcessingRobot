@@ -18,7 +18,7 @@ public class AliquotsBloodProcess extends RobotProcess {
 
         int sampleTubeIndex = 1;
         // Whittle down most of the liquid
-        while (currentVolume > 2.0) {
+        while (true) { //currentVolume > 2.0) {
             // Get some liquid
             try {
                 currentVolume = robot.aspirateSample(800);
@@ -37,6 +37,7 @@ public class AliquotsBloodProcess extends RobotProcess {
                 done(robot);
                 return false;
             }
+            break;
         }
         // Clean up
         try {

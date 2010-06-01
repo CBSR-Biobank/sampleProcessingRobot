@@ -40,7 +40,7 @@ public abstract class RobotProcess implements Runnable {
     }
 
     public void run() {
-        for (int sourceTubeIndex = 0; sourceTubeIndex < sourceTubeNumber; sourceTubeIndex++) {
+        for (int sourceTubeIndex = 1; sourceTubeIndex <= sourceTubeNumber; sourceTubeIndex++) {
             boolean res = getTube(sourceTubeIndex);
             if (!res)
                 return;
@@ -155,6 +155,7 @@ public abstract class RobotProcess implements Runnable {
     public void openError(String title, String message, Exception ex) {
         MessageDialog.openError(PlatformUI.getWorkbench()
             .getActiveWorkbenchWindow().getShell(), title, message);
-        logger.log(Level.SEVERE, message, ex);
+        ex.printStackTrace(System.err);
+        //logger.log(Level.SEVERE, message, ex);
     }
 }
