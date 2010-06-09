@@ -96,9 +96,9 @@ public class RobotTestMain {
 		// Only do this 6 times, regardless of the volume
 		// This can be dependent on volume in the future
 
-		// while (volume > 3000) {
-		int count = 1;
-		while (count < 7) {
+		while (volume > 3000) {
+			// int count = 1;
+			// while (count < 7) {
 			// Get some liquid
 			try {
 				volume = robot.aspirateSample(800);
@@ -116,7 +116,7 @@ public class RobotTestMain {
 				done(robot);
 				System.exit(1);
 			}
-			count++;
+			// count++;
 		}
 		// Clean up
 		try {

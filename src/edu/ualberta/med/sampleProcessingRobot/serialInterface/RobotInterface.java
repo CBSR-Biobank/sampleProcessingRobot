@@ -96,8 +96,8 @@ public class RobotInterface {
 	 * 
 	 * UNIMPLEMENTED!!!
 	 */
-	private SourceTubeSize tubeSize;
-	private FluidLevelType levelType;
+	// private SourceTubeSize tubeSize;
+	// private FluidLevelType levelType;
 
 	/**
 	 * Serial port interface to the robot.
@@ -193,13 +193,13 @@ public class RobotInterface {
 			throws RobotException {
 		if (!connectToXSEL())
 			throw new RobotInitException("Unable to connect to the robot");
-		if (size == null)
-			throw new NullPointerException("The source tube size is null!");
-		if (fluid == null)
-			throw new NullPointerException(
-					"The level sense fluid type is null!");
-		tubeSize = size;
-		levelType = fluid;
+		// if (size == null)
+		// throw new NullPointerException("The source tube size is null!");
+		// if (fluid == null)
+		// throw new NullPointerException(
+		// "The level sense fluid type is null!");
+		// tubeSize = size;
+		// levelType = fluid;
 	}
 
 	/**
