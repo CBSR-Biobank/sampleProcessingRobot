@@ -35,13 +35,13 @@ public class RobotTestMain {
 			System.exit(1);
 		}
 		// Read barcode
-		try {
-			barcode = robot.scanSourceTubeBarcode();
-		} catch (RobotException cbsre) {
-			System.out.println(cbsre);
-			done(robot);
-			System.exit(1);
-		}
+		// try {
+		// barcode = robot.scanSourceTubeBarcode();
+		// } catch (RobotException cbsre) {
+		// System.out.println(cbsre);
+		// done(robot);
+		// System.exit(1);
+		// }
 		if (barcode == "") {
 			System.out.println("Couldn't read source tube barcode");
 			done(robot);
