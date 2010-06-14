@@ -47,12 +47,6 @@
                   icon="icons/robot.png"
                   label="Sample Robot Processing Administration"
                   style="push">
-               <visibleWhen
-                     checkEnabled="false">
-                  <reference
-                        definitionId="biobank2.mainPerpectiveSelected">
-                  </reference>
-               </visibleWhen>
             </command>
          </toolbar>
       </menuContribution>
