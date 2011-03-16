@@ -14,12 +14,13 @@ import edu.ualberta.med.sampleProcessingRobot.perspectives.MainPerspective;
 
 public class ShowPerspectiveHandler extends AbstractHandler {
 
+    @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         try {
             IWorkbench workbench = SampleProcessingRobotPlugin.getDefault()
                 .getWorkbench();
-            workbench.showPerspective(MainPerspective.ID, workbench
-                .getActiveWorkbenchWindow());
+            workbench.showPerspective(MainPerspective.ID,
+                workbench.getActiveWorkbenchWindow());
             IWorkbenchPage page = workbench.getActiveWorkbenchWindow()
                 .getActivePage();
             page.resetPerspective();
