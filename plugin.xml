@@ -27,7 +27,7 @@
          <activeWhen>
            <and>
             <reference
-                  definitionId="biobank2.loggedIn">
+                  definitionId="edu.ualberta.med.biobank.gui.common.loggedIn">
             </reference>
            </and> 
          </activeWhen>
