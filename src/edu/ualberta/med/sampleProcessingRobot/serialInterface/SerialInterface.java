@@ -77,8 +77,7 @@ public class SerialInterface {
     public boolean isOpen() {
         if (port != null)
             return true;
-        else
-            return false;
+        return false;
     }
 
     /**
@@ -109,10 +108,9 @@ public class SerialInterface {
                 out = port.getOutputStream();
                 print("Opened port " + portName);
                 return true;
-            } else {
-                port = null;
-                print("Port " + portName + " is not a COM port!");
             }
+            port = null;
+            print("Port " + portName + " is not a COM port!");
         } catch (NoSuchPortException e) {
             port = null;
             print("Port " + portName + " does not exist!");
