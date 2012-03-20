@@ -8,10 +8,9 @@ public class RobotTestMain {
     /**
      * @param args
      */
-    @SuppressWarnings("unused")
     public static void main(String[] args) {
 
-        String barcode = null;
+        // String barcode = null;
         double volume = 0;
 
         // New interface
@@ -43,12 +42,13 @@ public class RobotTestMain {
         // done(robot);
         // System.exit(1);
         // }
-        if (barcode == "") {
-            System.out.println("Couldn't read source tube barcode");
-            done(robot);
-            System.exit(1);
-        } else
-            System.out.println("Tube barcode is: " + barcode);
+        // if (barcode.isEmpty()) {
+        // System.out.println("Couldn't read source tube barcode");
+        // done(robot);
+        // System.exit(1);
+        // } else
+        // System.out.println("Tube barcode is: " + barcode);
+
         // Get fluid level
         try {
             volume = robot.scanSourceTubeLevel();
